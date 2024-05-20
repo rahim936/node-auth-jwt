@@ -5,20 +5,20 @@ import UserModel from '../Models/UserModel.js';
 
 dotenv.config();
 
-export const verifyJWT = async (req, res, next) => {
+export const verifyJWT = (req, res, next) => {
   const accessToken = req.signedCookies['Access-Token'];
   if (!accessToken) return res.sendStatus(403);
 
-  jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, decodedToken) => {
+  jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
     try {
       if (err) return res.status(401).json({ success: false, message: err.message, name: err.name });
 
       const user = await UserModel.findOne({ accessToken: accessToken });
       if (!user) return res.status(401).json({ success: false, message: 'invalid refresh token' });
 
-      if (decodedToken.userID === user._id.toString()) {
-        if (decodedToken.sub === user.jwtID) {
-          req.user = { userID: decodedToken.userID, username: decodedToken.username, isLoggedIn: true, isAuthenticated: true };
+      if (payload.userID === user._id.toString()) {
+        if (payload.sub === user.jwtID) {
+          req.user = { userID: payload.userID, username: payload.username, isLoggedIn: true, isAuthenticated: true };
           return next();
         }
       }
