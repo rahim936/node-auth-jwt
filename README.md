@@ -5,7 +5,7 @@
 
 ### Env variables (using local Mongodb service)
 
-    HOSTNAME
+    APP_HOSTNAME
     APP_PORT
 
     DB_USERNAME
