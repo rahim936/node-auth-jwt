@@ -27,4 +27,10 @@
 -   POST    /api/v1/auth/login/     -> To login in.
 -   GET     /api/v1/access/         -> Get a refresh token.
 -   POST    /api/v1/auth/logout/    -> To log out.
+-   GET     /api/v1/profile/ (protected) -> get the profile info.
+
+## JWT 
+    jwt token are sent via signedCookie.
+
+
 
