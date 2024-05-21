@@ -32,5 +32,3 @@
 ## JWT 
     jwt token are sent via signedCookie.
 
-
-

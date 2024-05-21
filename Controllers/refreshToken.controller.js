@@ -5,19 +5,18 @@ import UserModel from '../Models/UserModel.js';
 
 dotenv.config();
 
-const refreshTokenController = (req, res) => {
-  const refreshToken = req.signedCookies['Refresh-Token'];
+const refreshTokenController = async (req, res) => {
+  try {
+    const refreshToken = req.signedCookies['Refresh-Token'];
+    if (!refreshToken) return res.status(403).json({ success: false, message: 'Refresh Token required' });
 
-  if (!refreshToken) return res.sendStatus(403);
+    const user = await UserModel.findOne({ refreshToken: refreshToken });
 
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
-    try {
-      if (err) return res.status(403).json({ success: false, err_message: err.message, err_name: err.name });
+    if (user) {
+      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
+        if (err) return res.status(403).json({ success: false, message: err.message });
 
-      const user = await UserModel.findOne({ refreshToken: refreshToken });
-      
-      if (user) {
-        if (payload.userID === user._id.toString()) {
+        if (payload.username === user.username) {
           if (payload.sub === user.jwtID) {
             const jwtID = crypto.randomUUID();
 
@@ -50,12 +49,12 @@ const refreshTokenController = (req, res) => {
               .json({ success: true, message: 'Tokens Obtained' });
           }
         }
-      }
-      return res.sendStatus(401)
-    } catch (err) {
-      return res.status(500).json({ success: false, message: 'Internal Server Error', name: err.name });
+      });
     }
-  });
+    return res.status(401).json('Invalid Refresh Token');
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Internal Server Error', name: err.name });
+  }
 };
 
 export default refreshTokenController;

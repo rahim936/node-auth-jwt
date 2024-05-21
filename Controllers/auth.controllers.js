@@ -7,12 +7,12 @@ import UserModel from '../Models/UserModel.js';
 // REGISTER CONTROLLER
 export const registerController = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, isAdmin, isActive } = req.body;
 
     const salt = await bcrypt.genSalt();
     const hashPwd = await bcrypt.hash(password, salt);
 
-    const user = await UserModel.create({ username: username, email: email, password: hashPwd});
+    const user = await UserModel.create({ username: username, email: email, password: hashPwd, isActive: isActive, isAdmin: isAdmin});
 
     return res.status(201).json({ success: true, message: 'Registration successful', user: user });
   } catch (err) {

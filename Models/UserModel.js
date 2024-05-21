@@ -46,6 +46,9 @@ const UserModelSchema = new Schema(
       unique: true,
     },
 
+    isAdmin: Boolean,
+    isActive: Boolean,
+
   },
   { timestamps: true }
 );
