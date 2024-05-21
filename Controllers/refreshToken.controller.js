@@ -5,18 +5,24 @@ import UserModel from '../Models/UserModel.js';
 
 dotenv.config();
 
-const refreshTokenController = async (req, res) => {
-  try {
-    const refreshToken = req.signedCookies['Refresh-Token'];
-    if (!refreshToken) return res.status(403).json({ success: false, message: 'Refresh Token required' });
+const refreshTokenController = (req, res) => {
+  const refreshToken = req.signedCookies['Refresh-Token'];
 
-    const user = await UserModel.findOne({ refreshToken: refreshToken });
+  if (!refreshToken) return res.status(403).json({ success: false, message: 'Refresh Token Required' });
 
-    if (user) {
-      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
-        if (err) return res.status(403).json({ success: false, message: err.message });
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
+    try {
+      if (err)
+        return res
+          .status(403)
+          .clearCookie('Access-Token', { httpOnly: true, secure: true, signed: true, maxAge: 0 })
+          .clearCookie('Refresh-Token', { httpOnly: true, secure: true, signed: true, maxAge: 0 })
+          .json({ success: false, err_message: err.message, err_name: err.name });
 
-        if (payload.username === user.username) {
+      const user = await UserModel.findOne({ refreshToken: refreshToken });
+
+      if (user) {
+        if (payload.userID === user._id.toString()) {
           if (payload.sub === user.jwtID) {
             const jwtID = crypto.randomUUID();
 
@@ -49,12 +55,17 @@ const refreshTokenController = async (req, res) => {
               .json({ success: true, message: 'Tokens Obtained' });
           }
         }
-      });
+      }
+      return res
+        .status(401)
+        .clearCookie('Access-Token', { httpOnly: true, secure: true, signed: true, maxAge: 0 })
+        .clearCookie('Refresh-Token', { httpOnly: true, secure: true, signed: true, maxAge: 0 })
+        .json({ success: false, message: 'Access Denied.' });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ success: false, message: 'Internal Server Error', name: err.name });
     }
-    return res.status(401).json('Invalid Refresh Token');
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Internal Server Error', name: err.name });
-  }
+  });
 };
 
 export default refreshTokenController;
